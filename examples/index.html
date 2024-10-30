@@ -1,23 +1,114 @@
 <!DOCTYPE html>
 <html>
-
 <head>
-  <script src="https://unpkg.com/jspsych"></script>
-  <!-- The plugin is loaded here -->
-  <script src="https://unpkg.com/@jspsych/plugin-{name}"></script>
-  <script src="../dist/index.global.js"></script>
-  <link rel="stylesheet" href="https://unpkg.com/jspsych/css/jspsych.css">
+    <title>jsPsych Leaderboard Plugin Example</title>
+
+    <script src="https://unpkg.com/jspsych"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response"></script>
+    <!-- The plugin is loaded here -->
+    <script src="../dist/index.browser.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/jspsych/css/jspsych.css">
 </head>
+<body>
+    <div id="jspsych-target"></div>
 
-<body></body>
-<script>
-  const jsPsych = initJsPsych();
+    <script>
+        // Initialize jsPsych
+        const jsPsych = initJsPsych({
+            display_element: 'jspsych-target'
+        });
 
-  const trial = {
-    type: {globalName}
-  };
+        // Sample leaderboard data
+        const leaderboardData = [
+            { rank: 1, player: "John Doe", score: 1000, time: "1:23" },
+            { rank: 2, player: "Alice Smith", score: 950, time: "1:25" },
+            { rank: 3, player: "Bob Johnson", score: 900, time: "1:28" },
+            { rank: 4, player: "Emma Davis", score: 850, time: "1:30" },
+            { rank: 5, player: "Michael Wilson", score: 800, time: "1:32" }
+        ];
 
-  jsPsych.run([trial])
-</script>
+        // Create the timeline
+        const timeline = [];
 
+        // Add welcome message
+        timeline.push({
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: `
+                <h2>Welcome to the Leaderboard Demo</h2>
+                <p>Press any key to see the current standings.</p>
+            `
+        });
+
+        // Add basic leaderboard display
+        timeline.push({
+            type: jsPsychLeaderboard,
+            data: leaderboardData,
+            headers: ["rank", "player", "score", "time"],
+            duration: null // Will require button press to continue
+        });
+
+        // Add custom styled leaderboard
+        timeline.push({
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: `
+                <h2>Now let's see a custom styled version!</h2>
+                <p>Press any key to continue.</p>
+            `
+        });
+
+        // Custom styled leaderboard
+        const customStyles = `
+            .jspsych-leaderboard-table {
+                border-collapse: collapse;
+                margin: 25px auto;
+                font-family: 'Arial', sans-serif;
+                min-width: 400px;
+                background-color: #ffffff;
+                border-radius: 10px;
+                overflow: hidden;
+                box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            }
+            .jspsych-leaderboard-table thead tr {
+                background-color: #4CAF50;
+                color: #ffffff;
+                text-align: center;
+                font-weight: bold;
+            }
+            .jspsych-leaderboard-table th,
+            .jspsych-leaderboard-table td {
+                padding: 12px 15px;
+                text-align: center;
+            }
+            .jspsych-leaderboard-table tbody tr:nth-of-type(1) {
+                background-color: #ffd700;
+                font-weight: bold;
+            }
+            .jspsych-leaderboard-table tbody tr:nth-of-type(2) {
+                background-color: #c0c0c0;
+            }
+            .jspsych-leaderboard-table tbody tr:nth-of-type(3) {
+                background-color: #cd7f32;
+            }
+        `;
+
+        timeline.push({
+            type: jsPsychLeaderboard,
+            data: leaderboardData,
+            headers: ["rank", "player", "score", "time"],
+            table_styles: customStyles,
+            duration: null
+        });
+
+        // Add end message
+        timeline.push({
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: `
+                <h2>Demo Complete!</h2>
+            `
+        });
+
+        // Start the experiment
+        jsPsych.run(timeline);
+    </script>
+</body>
 </html>

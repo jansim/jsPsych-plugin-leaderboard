@@ -1,30 +1,57 @@
 import { JsPsych, JsPsychPlugin, ParameterType, TrialType } from "jspsych";
-
 import { version } from "../package.json";
 
 const info = <const>{
-  name: "{name}",
+  name: "leaderboard",
   version: version,
   parameters: {
-    /** Provide a clear description of the parameter_name that could be used as documentation. We will eventually use these comments to automatically build documentation and produce metadata. */
-    parameter_name: {
-      type: ParameterType.INT, // BOOL, STRING, INT, FLOAT, FUNCTION, KEY, KEYS, SELECT, HTML_STRING, IMAGE, AUDIO, VIDEO, OBJECT, COMPLEX
+    /** An array of objects containing leaderboard data. Each object should have properties that will be displayed as columns.
+     * Example: [{rank: 1, name: "Player 1", score: 1000}] */
+    data: {
+      type: ParameterType.OBJECT,
       default: undefined,
     },
-    /** Provide a clear description of the parameter_name2 that could be used as documentation. We will eventually use these comments to automatically build documentation and produce metadata. */
-    parameter_name2: {
-      type: ParameterType.IMAGE,
+    /** Array of column headers to display. Should match the property names in the data objects.
+     * Example: ["rank", "name", "score"] */
+    headers: {
+      type: ParameterType.OBJECT,
       default: undefined,
     },
-  },
-  data: {
-    /** Provide a clear description of the data1 that could be used as documentation. We will eventually use these comments to automatically build documentation and produce metadata. */
-    data1: {
-      type: ParameterType.INT,
-    },
-    /** Provide a clear description of the data2 that could be used as documentation. We will eventually use these comments to automatically build documentation and produce metadata. */
-    data2: {
+    /** Custom CSS styles for the table (optional) */
+    table_styles: {
       type: ParameterType.STRING,
+      default: `
+        .jspsych-leaderboard-table {
+          border-collapse: collapse;
+          margin: 25px auto;
+          font-family: sans-serif;
+          min-width: 400px;
+          box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+        }
+        .jspsych-leaderboard-table thead tr {
+          background-color: #009879;
+          color: #ffffff;
+          text-align: left;
+        }
+        .jspsych-leaderboard-table th,
+        .jspsych-leaderboard-table td {
+          padding: 12px 15px;
+          text-align: left;
+        }
+        .jspsych-leaderboard-table tbody tr {
+          border-bottom: 1px solid #dddddd;
+        }
+        .jspsych-leaderboard-table tbody tr:nth-of-type(even) {
+          background-color: #f3f3f3;
+        }
+        .jspsych-leaderboard-table tbody tr:last-of-type {
+          border-bottom: 2px solid #009879;
+        }`,
+    },
+    /** Duration to display the leaderboard in milliseconds. If null, will require button press. */
+    duration: {
+      type: ParameterType.INT,
+      default: null,
     },
   },
 };
@@ -32,28 +59,93 @@ const info = <const>{
 type Info = typeof info;
 
 /**
- * **{name}**
+ * **leaderboard**
  *
- * {description}
+ * jsPsych plugin for displaying a leaderboard table
  *
- * @author {author}
- * @see {@link {documentation-url}}}
+ * @author Jan Simson
+ * @see {@link https://github.com/jansim/jsPsych-leaderboard}
  */
-class PluginNamePlugin implements JsPsychPlugin<Info> {
+class LeaderboardPlugin implements JsPsychPlugin<Info> {
   static info = info;
 
   constructor(private jsPsych: JsPsych) {}
 
   trial(display_element: HTMLElement, trial: TrialType<Info>) {
-    // data saving
-    var trial_data = {
-      data1: 99, // Make sure this type and name matches the information for data1 in the data object contained within the info const.
-      data2: "hello world!", // Make sure this type and name matches the information for data2 in the data object contained within the info const.
+    // Validate required parameters
+    if (!trial.data || !trial.headers) {
+      console.error("Required parameters 'data' and 'headers' must be provided");
+      this.jsPsych.finishTrial();
+      return;
+    }
+    if (!Array.isArray(trial.data) || !Array.isArray(trial.headers)) {
+      console.error("Parameters 'data' and 'headers' must be arrays");
+      this.jsPsych.finishTrial();
+      return;
+    }
+
+    // Add CSS styles
+    const styleElement = document.createElement('style');
+    styleElement.textContent = trial.table_styles;
+    display_element.appendChild(styleElement);
+
+    // Create table element
+    const table = document.createElement('table');
+    table.className = 'jspsych-leaderboard-table';
+
+    // Create table header
+    const thead = document.createElement('thead');
+    const headerRow = document.createElement('tr');
+    trial.headers.forEach(header => {
+      const th = document.createElement('th');
+      th.textContent = header;
+      headerRow.appendChild(th);
+    });
+    thead.appendChild(headerRow);
+    table.appendChild(thead);
+
+    // Create table body
+    const tbody = document.createElement('tbody');
+    trial.data.forEach(row => {
+      const tr = document.createElement('tr');
+      // @ts-ignore Headers is validated to be an array above
+      trial.headers.forEach(header => {
+        const td = document.createElement('td');
+        td.textContent = row[header];
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+
+    // Add table to display element
+    display_element.appendChild(table);
+
+    // Add continue button if duration is null
+    if (trial.duration === null) {
+      const button = document.createElement('button');
+      button.textContent = 'Continue';
+      button.className = 'jspsych-btn';
+      button.addEventListener('click', () => {
+        end_trial();
+      });
+      display_element.appendChild(button);
+    }
+
+    // Function to end trial
+    const end_trial = () => {
+      // clear the display
+      display_element.innerHTML = '';
+
+      // end trial
+      this.jsPsych.finishTrial();
     };
 
-    // end trial
-    this.jsPsych.finishTrial(trial_data);
+    // End trial after duration if specified
+    if (trial.duration !== null) {
+      this.jsPsych.pluginAPI.setTimeout(end_trial, trial.duration);
+    }
   }
 }
 
-export default PluginNamePlugin;
+export default LeaderboardPlugin;
