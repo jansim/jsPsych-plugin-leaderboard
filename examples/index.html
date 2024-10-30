@@ -43,8 +43,7 @@
         timeline.push({
             type: jsPsychLeaderboard,
             data: leaderboardData,
-            headers: ["rank", "player", "score", "time"],
-            duration: null // Will require button press to continue
+            columns: [{ col: "rank", name: ""}, { col: "player", name: "Name"}, { col: "score", name: "Score"}, {col: "time", name: "Time"}],
         });
 
         // Add custom styled leaderboard
@@ -94,7 +93,6 @@
         timeline.push({
             type: jsPsychLeaderboard,
             data: leaderboardData,
-            headers: ["rank", "player", "score", "time"],
             table_styles: customStyles,
             duration: null
         });

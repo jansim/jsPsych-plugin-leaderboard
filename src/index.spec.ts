@@ -10,23 +10,27 @@ describe("leaderboard plugin", () => {
     { rank: 3, name: "Bob", score: 900 }
   ];
 
-  const headers = ["rank", "name", "score"];
+  const columns = [
+    { col: "rank", name: ""},
+    { col: "name", name: "Player Name"},
+    { col: "score", name: "ASDF"}
+  ];
 
   it("should load and display the leaderboard", async () => {
     const { expectFinished, getHTML, getData } = await startTimeline([
       {
         type: LeaderboardPlugin,
         data: sampleData,
-        headers: headers,
+        columns: columns,
       },
     ]);
 
     // Check if table is rendered
     expect(getHTML()).toContain('jspsych-leaderboard-table');
 
-    // Check if headers are present
-    headers.forEach(header => {
-      expect(getHTML()).toContain(header);
+    // Check if columns are present
+    columns.forEach(header => {
+      expect(getHTML()).toContain(header.name);
     });
 
     // Check if data is displayed
@@ -50,7 +54,7 @@ describe("leaderboard plugin", () => {
       {
         type: LeaderboardPlugin,
         data: sampleData,
-        headers: headers,
+        columns: columns,
         duration: duration,
       },
     ]);
@@ -71,16 +75,16 @@ describe("leaderboard plugin", () => {
       {
         type: LeaderboardPlugin,
         data: emptyData,
-        headers: headers,
+        columns: columns,
       },
     ]);
 
     // Table should still be created
     expect(getHTML()).toContain('jspsych-leaderboard-table');
 
-    // Headers should be present
-    headers.forEach(header => {
-      expect(getHTML()).toContain(header);
+    // columns should be present
+    columns.forEach(header => {
+      expect(getHTML()).toContain(header.name);
     });
 
     // Click continue button
@@ -111,7 +115,7 @@ describe("leaderboard plugin", () => {
       {
         type: LeaderboardPlugin,
         data: sampleData,
-        headers: headers,
+        columns: columns,
         table_styles: customStyles,
       },
     ]);

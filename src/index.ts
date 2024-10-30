@@ -6,16 +6,18 @@ const info = <const>{
   version: version,
   parameters: {
     /** An array of objects containing leaderboard data. Each object should have properties that will be displayed as columns.
-     * Example: [{rank: 1, name: "Player 1", score: 1000}] */
+     * Example: [{rank: 1, score: 1000, name: "Player 1"}] */
     data: {
       type: ParameterType.OBJECT,
       default: undefined,
     },
-    /** Array of column headers to display. Should match the property names in the data objects.
-     * Example: ["rank", "name", "score"] */
-    headers: {
+    /** Array with information about the table columns. Should match the property names in the data objects.
+     * The order of the columns will be the order in which they are displayed and the supplied names will be used as headers.
+     * If no name is supplied, the property name itself will be used as header.
+     * Example: [{col: "name", name: "Player Name"}, {col: score}] */
+    columns: {
       type: ParameterType.OBJECT,
-      default: undefined,
+      default: null,
     },
     /** Custom CSS styles for the table (optional) */
     table_styles: {
@@ -58,6 +60,11 @@ const info = <const>{
 
 type Info = typeof info;
 
+type ColumnInfo = {
+  col: string;
+  name?: string;
+}
+
 /**
  * **leaderboard**
  *
@@ -73,15 +80,21 @@ class LeaderboardPlugin implements JsPsychPlugin<Info> {
 
   trial(display_element: HTMLElement, trial: TrialType<Info>) {
     // Validate required parameters
-    if (!trial.data || !trial.headers) {
-      console.error("Required parameters 'data' and 'headers' must be provided");
+    if (!trial.data) {
+      console.error("Required parameter 'data' must be provided");
       this.jsPsych.finishTrial();
       return;
     }
-    if (!Array.isArray(trial.data) || !Array.isArray(trial.headers)) {
-      console.error("Parameters 'data' and 'headers' must be arrays");
+    if (!Array.isArray(trial.data) || !(Array.isArray(trial.columns) || trial.columns == null)) {
+      console.error("Parameters 'data' and 'columns' must be arrays");
       this.jsPsych.finishTrial();
       return;
+    }
+
+    let columns: Array<ColumnInfo> = trial.columns as Array<ColumnInfo>;
+    // Default to just use inherent order of first row if no column info provided
+    if (columns == null) {
+      columns = Object.keys(trial.data[0]).map(col => ({ col }));
     }
 
     // Add CSS styles
@@ -96,9 +109,9 @@ class LeaderboardPlugin implements JsPsychPlugin<Info> {
     // Create table header
     const thead = document.createElement('thead');
     const headerRow = document.createElement('tr');
-    trial.headers.forEach(header => {
+    columns.forEach(column => {
       const th = document.createElement('th');
-      th.textContent = header;
+      th.textContent = column.name === undefined ? column.col : column.name;
       headerRow.appendChild(th);
     });
     thead.appendChild(headerRow);
@@ -108,10 +121,9 @@ class LeaderboardPlugin implements JsPsychPlugin<Info> {
     const tbody = document.createElement('tbody');
     trial.data.forEach(row => {
       const tr = document.createElement('tr');
-      // @ts-ignore Headers is validated to be an array above
-      trial.headers.forEach(header => {
+      columns.forEach(column => {
         const td = document.createElement('td');
-        td.textContent = row[header];
+        td.textContent = row[column.col];
         tr.appendChild(td);
       });
       tbody.appendChild(tr);
