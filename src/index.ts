@@ -163,7 +163,8 @@ class LeaderboardPlugin implements JsPsychPlugin<Info> {
 
       // Load leaderboard scores
       display_element.innerHTML = trial.loading_message;
-      data = await client.getLeaderboardScores(trial.wwl_leaderboard_id, trial.wwl_score_level, trial.wwl_score_options)
+      const response = await client.getLeaderboardScores(trial.wwl_leaderboard_id, trial.wwl_score_level, trial.wwl_score_options)
+      data = response.scores || [];
       console.log("Leaderboard data loaded:", data);
       display_element.innerHTML = '';
 
