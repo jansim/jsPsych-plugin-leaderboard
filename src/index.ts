@@ -118,30 +118,30 @@ class LeaderboardPlugin implements JsPsychPlugin<Info> {
   constructor(private jsPsych: JsPsych) {}
 
   async trial(display_element: HTMLElement, trial: TrialType<Info>, on_load: () => void) {
+    const onError = (errorMessage: string) => {
+      display_element.innerHTML = "Error: " + errorMessage;
+      this.jsPsych.finishTrial();
+    }
+
     // Validate required parameters
     if (!trial.data && !trial.wwl_leaderboard_id) {
-      console.error("You must specify either 'data' or 'wwl_leaderboard_id'");
-      this.jsPsych.finishTrial();
+      onError("You must specify either 'data' or 'wwl_leaderboard_id'");
       return;
     }
     if (trial.data && trial.wwl_leaderboard_id) {
-      console.error("You must exclusively specify either 'data' OR 'wwl_leaderboard_id'");
-      this.jsPsych.finishTrial();
+      onError("You must exclusively specify either 'data' OR 'wwl_leaderboard_id'");
       return;
     }
     if (trial.wwl_leaderboard_id && !trial.jsPsychWorldWideLab) {
-      console.error("You must pass in 'jsPsychWorldWideLab' when using 'wwl_leaderboard_id'");
-      this.jsPsych.finishTrial();
+      onError("You must pass in 'jsPsychWorldWideLab' when using 'wwl_leaderboard_id'");
       return;
     }
     if (!(Array.isArray(trial.data) || trial.data == null) || !(Array.isArray(trial.columns) || trial.columns == null)) {
-      console.error("Parameters 'data' and 'columns' must be arrays or null");
-      this.jsPsych.finishTrial();
+      onError("Parameters 'data' and 'columns' must be arrays or null");
       return;
     }
     if (trial.wwl_score_level !== "individual" && trial.wwl_score_level !== "groups") {
-      console.error("Parameter 'wwl_score_level' must be either 'individual' or 'groups'");
-      this.jsPsych.finishTrial();
+      onError("Parameter 'wwl_score_level' must be either 'individual' or 'groups'");
       return;
     }
 

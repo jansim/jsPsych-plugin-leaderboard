@@ -118,13 +118,13 @@ describe("leaderboard plugin", () => {
   });
 
   it("should fail gracefully when required parameters are missing", async () => {
-    const { expectFinished, getData } = await startTimeline([
+    const { expectFinished, getHTML } = await startTimeline([
       {
         type: LeaderboardPlugin,
       },
     ]);
 
-    await expectFinished();
+    expect(getHTML()).toContain('Error');
   });
 
   it("should apply custom styles when provided", async () => {
