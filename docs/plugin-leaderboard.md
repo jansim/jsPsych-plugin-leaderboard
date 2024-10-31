@@ -98,7 +98,7 @@ const jsPsych = jsPsychWorldWideLab.initJsPsych(
   {
     // Options for the World-Wide-Lab Integration
     // URL to where World-Wide-Lab is running
-    url: "https://localhost:8787",
+    url: "http://localhost:8787",
     // Id of the study you're running
     studyId: "example",
   },
