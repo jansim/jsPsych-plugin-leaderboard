@@ -9,7 +9,24 @@ const info = <const>{
      * Example: [{rank: 1, score: 1000, name: "Player 1"}] */
     data: {
       type: ParameterType.OBJECT,
-      default: undefined,
+      default: null,
+    },
+    /** The LeaderboardId in World-Wide-Lab (https://worldwidelab.org/).
+     * If specified, this will automatically download and display leaderboard data.
+     * Requires jsPsychWorldWideLab to be set.
+     * See https://worldwidelab.org/guides/leaderboards.html for more information.
+     * */
+    wwl_leaderboard_id: {
+      type: ParameterType.STRING,
+      default: null,
+    },
+    /** The jsPsych-WorldWideLab integration.
+     * You will need to import and load this yourself and then just pass it here.
+     * See https://worldwidelab.org/guides/integration-jsPsych.html for more information.
+    */
+    jsPsychWorldWideLab: {
+      type: ParameterType.FUNCTION,
+      default: null,
     },
     /** Array with information about the table columns. Should match the property names in the data objects.
      * The order of the columns will be the order in which they are displayed and the supplied names will be used as headers.
@@ -18,6 +35,27 @@ const info = <const>{
     columns: {
       type: ParameterType.OBJECT,
       default: null,
+    },
+    /**
+     * The level of the scores to retrieve from WWL. Either "individual" or "groups".
+     * Requires wwl_leaderboard_id.
+     */
+    wwl_score_level: {
+      type: ParameterType.STRING,
+      default: "individual",
+    },
+    /**
+     * Options to specify how scores should be retrieved from WWL. See: https://worldwidelab.org/reference/client.getleaderoardscoresoptions.html
+     * Requires wwl_leaderboard_id.
+     */
+    wwl_score_options: {
+      type: ParameterType.OBJECT,
+      default: {},
+    },
+    /** Message to display while loading leaderboard data. Only displayed when dynamically loading data. */
+    loading_message: {
+      type: ParameterType.STRING,
+      default: "Loading leaderboard data.",
     },
     /** Custom CSS styles for the table (optional) */
     table_styles: {
@@ -56,6 +94,7 @@ const info = <const>{
       default: null,
     },
   },
+  data: {},
 };
 
 type Info = typeof info;
@@ -78,24 +117,72 @@ class LeaderboardPlugin implements JsPsychPlugin<Info> {
 
   constructor(private jsPsych: JsPsych) {}
 
-  trial(display_element: HTMLElement, trial: TrialType<Info>) {
+  async trial(display_element: HTMLElement, trial: TrialType<Info>, on_load: () => void) {
     // Validate required parameters
-    if (!trial.data) {
-      console.error("Required parameter 'data' must be provided");
+    if (!trial.data && !trial.wwl_leaderboard_id) {
+      console.error("You must specify either 'data' or 'wwl_leaderboard_id'");
       this.jsPsych.finishTrial();
       return;
     }
-    if (!Array.isArray(trial.data) || !(Array.isArray(trial.columns) || trial.columns == null)) {
-      console.error("Parameters 'data' and 'columns' must be arrays");
+    if (trial.data && trial.wwl_leaderboard_id) {
+      console.error("You must exclusively specify either 'data' OR 'wwl_leaderboard_id'");
+      this.jsPsych.finishTrial();
+      return;
+    }
+    if (trial.wwl_leaderboard_id && !trial.jsPsychWorldWideLab) {
+      console.error("You must pass in 'jsPsychWorldWideLab' when using 'wwl_leaderboard_id'");
+      this.jsPsych.finishTrial();
+      return;
+    }
+    if (!(Array.isArray(trial.data) || trial.data == null) || !(Array.isArray(trial.columns) || trial.columns == null)) {
+      console.error("Parameters 'data' and 'columns' must be arrays or null");
+      this.jsPsych.finishTrial();
+      return;
+    }
+    if (trial.wwl_score_level !== "individual" && trial.wwl_score_level !== "groups") {
+      console.error("Parameter 'wwl_score_level' must be either 'individual' or 'groups'");
       this.jsPsych.finishTrial();
       return;
     }
 
+    let data: Array<{[key: string]: string | number}>;
     let columns: Array<ColumnInfo> = trial.columns as Array<ColumnInfo>;
-    // Default to just use inherent order of first row if no column info provided
-    if (columns == null) {
-      columns = Object.keys(trial.data[0]).map(col => ({ col }));
+
+    // Download leaderboard data from WWL
+    if (trial.wwl_leaderboard_id) {
+      // Get the WWL jsPsych integration
+      const jsPsychWorldWideLab = trial.jsPsychWorldWideLab as unknown as typeof import("@world-wide-lab/integration-jspsych").default;
+
+      // Check if client is initialized
+      const client = jsPsychWorldWideLab.client;
+      if (!client) {
+        console.error("You must initialize the World-Wide-Lab integration before using the leaderboard plugin.");
+        this.jsPsych.finishTrial();
+        return;
+      }
+
+      // Load leaderboard scores
+      display_element.innerHTML = trial.loading_message;
+      data = await client.getLeaderboardScores(trial.wwl_leaderboard_id, trial.wwl_score_level, trial.wwl_score_options)
+      console.log("Leaderboard data loaded:", data);
+      display_element.innerHTML = '';
+
+      // Generate column info if not provided
+      if (columns == null) {
+        const nameKey = trial.wwl_score_level === "individual" ? "publicIndividualName" : "publicGroupName";
+        columns = [
+          { col: nameKey, name: "Name" },
+          { col: "score", name: "Score" },
+        ]
+      }
+    } else {
+      data = trial.data as Array<{[key: string]: string | number}>;
+      // Default to just use inherent order of first row if no column info provided
+      if (columns == null) {
+        columns = Object.keys(trial.data[0]).map(col => ({ col }));
+      }
     }
+    on_load();
 
     // Add CSS styles
     const styleElement = document.createElement('style');
@@ -119,11 +206,11 @@ class LeaderboardPlugin implements JsPsychPlugin<Info> {
 
     // Create table body
     const tbody = document.createElement('tbody');
-    trial.data.forEach(row => {
+    data.forEach(row => {
       const tr = document.createElement('tr');
       columns.forEach(column => {
         const td = document.createElement('td');
-        td.textContent = row[column.col];
+        td.textContent = String(row[column.col]);
         tr.appendChild(td);
       });
       tbody.appendChild(tr);
@@ -157,6 +244,9 @@ class LeaderboardPlugin implements JsPsychPlugin<Info> {
     if (trial.duration !== null) {
       this.jsPsych.pluginAPI.setTimeout(end_trial, trial.duration);
     }
+
+    // Don't close trial function as this will trigger finishTrial
+    await new Promise((resolve) => {});
   }
 }
 

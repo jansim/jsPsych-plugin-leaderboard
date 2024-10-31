@@ -1,5 +1,6 @@
 import { startTimeline } from "@jspsych/test-utils";
 import LeaderboardPlugin from ".";
+import { jsPsychWorldWideLab } from "../__mocks__/@world-wide-lab/integration-jspsych";
 
 jest.useFakeTimers();
 
@@ -39,6 +40,28 @@ describe("leaderboard plugin", () => {
         expect(getHTML()).toContain(value.toString());
       });
     });
+
+    // Click continue button
+    const continueButton = document.querySelector('.jspsych-btn');
+    continueButton.click();
+
+    await expectFinished();
+  });
+
+  it("should load and display a leaderboard from WWL", async () => {
+    const wwl_leaderboard_id = "test-leaderboard";
+    const { expectFinished, getHTML, getData } = await startTimeline([
+      {
+        type: LeaderboardPlugin,
+        wwl_leaderboard_id,
+        jsPsychWorldWideLab,
+      },
+    ]);
+
+    // Check if table is rendered
+    expect(getHTML()).toContain('jspsych-leaderboard-table');
+
+    expect(getHTML()).toContain(wwl_leaderboard_id);
 
     // Click continue button
     const continueButton = document.querySelector('.jspsych-btn');
