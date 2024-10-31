@@ -1,7 +1,7 @@
 {
   "name": "@jspsych-contrib/plugin-leaderboard",
   "version": "0.0.1",
-  "description": "{description}",
+  "description": "A jsPsych plugin for displaying a leaderboard table.",
   "type": "module",
   "main": "dist/index.cjs",
   "exports": {
@@ -28,14 +28,14 @@
     "directory": "packages/plugin-leaderboard"
   },
   "author": {
-    "name": "{author}",
-    "url": "{authorUrl}"
+    "name": "Jan Simson",
+    "url": "https://github.com/jansim"
   },
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/jspsych/jspsych-contrib/issues"
   },
-  "homepage": "https://github.com/jspsych/jspsych-contrib/tree/main/packages/plugin-{name}",
+  "homepage": "https://github.com/jspsych/jspsych-contrib/tree/main/packages/plugin-leaderboard",
   "peerDependencies": {
     "jspsych": ">=7.0.0"
   },
