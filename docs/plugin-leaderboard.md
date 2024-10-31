@@ -55,6 +55,9 @@ import jsPsychLeaderboard from '@jspsych-contrib/plugin-leaderboard';
 ### Basic Example
 
 ```javascript
+import { initJsPsych } from 'jspsych';
+import jsPsychLeaderboard from '@jspsych-contrib/plugin-leaderboard';
+
 const jsPsych = initJsPsych({
   display_element: 'jspsych-target'
 });
@@ -62,33 +65,87 @@ const jsPsych = initJsPsych({
 const leaderboardData = [
   { rank: 1, player: "John Doe", score: 1000, time: "1:23" },
   { rank: 2, player: "Alice Smith", score: 950, time: "1:25" },
-  { rank: 3, player: "Bob Johnson", score: 900, time: "1:28" },
-  { rank: 4, player: "Emma Davis", score: 850, time: "1:30" },
-  { rank: 5, player: "Michael Wilson", score: 800, time: "1:32" }
+  { rank: 3, player: "Max Mustermann", score: 900, time: "1:28" }
 ];
 
 const timeline = [];
 
 timeline.push({
-  type: jsPsychHtmlKeyboardResponse,
-  stimulus: `
-    <h2>Welcome to the Leaderboard Demo</h2>
-    <p>Press any key to see the current standings.</p>
-  `
-});
-
-timeline.push({
   type: jsPsychLeaderboard,
   data: leaderboardData,
-  columns: [{ col: "rank", name: ""}, { col: "player", name: "Name"}, { col: "score", name: "Score"}, {col: "time", name: "Time"}],
+  columns: [
+    { col: "rank", name: ""},
+    { col: "player", name: "Name"},
+    { col: "score", name: "Score"},
+    {col: "time", name: "Time"}
+  ],
 });
 
-timeline.push({
-  type: jsPsychHtmlKeyboardResponse,
-  stimulus: `
-    <h2>Demo Complete!</h2>
-  `
-});
+jsPsych.run(timeline);
+```
+
+### Loading Leaderboard Data from World-Wide-Lab
+
+```javascript
+import jsPsychHtmlKeyboardResponse from "@jspsych/plugin-html-keyboard-response";
+import jsPsychLeaderboard from '@jspsych-contrib/plugin-leaderboard';
+import jsPsychWorldWideLab from "@world-wide-lab/integration-jspsych";
+
+const jsPsych = jsPsychWorldWideLab.initJsPsych(
+  {
+    // Options to pass to the normal initJsPsych()
+  },
+  {
+    // Options for the World-Wide-Lab Integration
+    // URL to where World-Wide-Lab is running
+    url: "https://localhost:8787",
+    // Id of the study you're running
+    studyId: "example",
+  },
+);
+
+const leaderboardId = "example";
+
+// We need some name to show the score under
+// Here, we just assign a random animal emoji to the user
+function getRandomAnimalEmoji() {
+  const start = 0x1F400; const end = 0x1F43E;
+  return String.fromCodePoint(Math.floor(Math.random() * (end - start + 1)) + start);
+}
+const userName = getRandomAnimalEmoji();
+
+const timeline = [
+  {
+    type: jsPsychHtmlKeyboardResponse,
+    stimulus: `Your assigned emoji is: ${userName}. Press any key to continue.`,
+  },
+  {
+    type: jsPsychHtmlKeyboardResponse,
+    choices: "a",
+    stimulus: "Press the key 'a' as fast as possible to add your score to the leaderboard.",
+    on_finish: async (data) => {
+      // Add a new score to the leaderboard 🏆️
+      await jsPsychWorldWideLab.session.addScoreToLeaderboard(leaderboardId, {
+        // The score itself
+        score: data.rt,
+        // Optionally, some name(s) to associate with the score
+        publicIndividualName: userName,
+        publicGroupName: "Team jsPsych",
+      });
+    },
+  },
+  // Show the leaderboard
+  {
+    type: jsPsychLeaderboard,
+    wwl_leaderboard_id: leaderboardId,
+    jsPsychWorldWideLab: jsPsychWorldWideLab,
+    wwl_score_options: {
+      // Use ascending order since lower is better
+      sort: "asc",
+      // You can do a lot more here e.g. group scores, filter by date and aggregate scores
+    }
+  },
+];
 
 jsPsych.run(timeline);
 ```
