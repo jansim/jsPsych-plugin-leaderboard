@@ -1,8 +1,8 @@
-# plugin-leaderboard
+# leaderboard plugin 🏆️
 
 ## Overview
 
-A jsPsych plugin for displaying a leaderboard table.
+This plugin displays a leaderboard table. It comes with integrated support to dynamically load a leaderboard from [World-Wide-Lab](https://worldwidelab.org).
 
 ## Loading
 
@@ -28,7 +28,7 @@ jsPsych 7.0.0
 
 ## Documentation
 
-See [documentation](https://github.com/jspsych/jspsych-contrib/blob/main/packages/plugin-leaderboard/docs/jspsych-plugin-leaderboard.md)
+See [documentation](docs/plugin-leaderboard.md).
 
 ## Author / Citation
 
