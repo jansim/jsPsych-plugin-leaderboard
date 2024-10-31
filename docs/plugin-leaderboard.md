@@ -8,7 +8,7 @@ In addition to the [parameters available in all plugins](https://jspsych.org/lat
 
 | Parameter           | Type             | Default Value      | Description                              |
 | ------------------- | ---------------- | ------------------ | ---------------------------------------- |
-| data                | OBJECT           | null               | An array of objects containing leaderboard data. Each object should have properties that will be displayed as columns. Example: [{rank: 1, score: 1000, name: "Player 1"}] |
+| leaderboard_data    | OBJECT           | null               | An array of objects containing leaderboard data. Each object should have properties that will be displayed as columns. Example: [{rank: 1, score: 1000, name: "Player 1"}] |
 | wwl_leaderboard_id  | STRING           | null               | The LeaderboardId in World-Wide-Lab (https://worldwidelab.org/). If specified, this will automatically download and display leaderboard data. Requires jsPsychWorldWideLab to be set. See https://worldwidelab.org/guides/leaderboards.html for more information. |
 | jsPsychWorldWideLab | FUNCTION         | null               | The jsPsych-WorldWideLab integration. You will need to import and load this yourself and then just pass it here. See https://worldwidelab.org/guides/integration-jsPsych.html for more information. |
 | columns             | OBJECT           | null               | Array with information about the table columns. Should match the property names in the data objects. The order of the columns will be the order in which they are displayed and the supplied names will be used as headers. If no name is supplied, the property name itself will be used as header. Example: [{col: "name", name: "Player Name"}, {col: score}] |
@@ -22,9 +22,9 @@ In addition to the [parameters available in all plugins](https://jspsych.org/lat
 
 In addition to the [default data collected by all plugins](https://jspsych.org/latest/overview/plugins.md#data-collected-by-all-plugins), this plugin collects the following data for each trial.
 
-| Name      | Type    | Value                                    |
-| --------- | ------- | ---------------------------------------- |
-|           |         |                                          |
+| Name             | Type    | Value                                        |
+| ---------------- | ------- | -------------------------------------------- |
+| leaderboard_data | OBJECT  | The leaderboard data displayed in the table. |
 
 ## Install
 

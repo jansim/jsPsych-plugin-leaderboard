@@ -7,7 +7,7 @@ const info = <const>{
   parameters: {
     /** An array of objects containing leaderboard data. Each object should have properties that will be displayed as columns.
      * Example: [{rank: 1, score: 1000, name: "Player 1"}] */
-    data: {
+    leaderboard_data: {
       type: ParameterType.OBJECT,
       default: null,
     },
@@ -94,7 +94,13 @@ const info = <const>{
       default: null,
     },
   },
-  data: {},
+  data: {
+    /** The leaderboard data displayed in the table. */
+    leaderboard_data: {
+      type: ParameterType.OBJECT,
+      default: null,
+    },
+  },
 };
 
 type Info = typeof info;
@@ -124,11 +130,11 @@ class LeaderboardPlugin implements JsPsychPlugin<Info> {
     }
 
     // Validate required parameters
-    if (!trial.data && !trial.wwl_leaderboard_id) {
+    if (!trial.leaderboard_data && !trial.wwl_leaderboard_id) {
       onError("You must specify either 'data' or 'wwl_leaderboard_id'");
       return;
     }
-    if (trial.data && trial.wwl_leaderboard_id) {
+    if (trial.leaderboard_data && trial.wwl_leaderboard_id) {
       onError("You must exclusively specify either 'data' OR 'wwl_leaderboard_id'");
       return;
     }
@@ -136,7 +142,7 @@ class LeaderboardPlugin implements JsPsychPlugin<Info> {
       onError("You must pass in 'jsPsychWorldWideLab' when using 'wwl_leaderboard_id'");
       return;
     }
-    if (!(Array.isArray(trial.data) || trial.data == null) || !(Array.isArray(trial.columns) || trial.columns == null)) {
+    if (!(Array.isArray(trial.leaderboard_data) || trial.leaderboard_data == null) || !(Array.isArray(trial.columns) || trial.columns == null)) {
       onError("Parameters 'data' and 'columns' must be arrays or null");
       return;
     }
@@ -177,10 +183,10 @@ class LeaderboardPlugin implements JsPsychPlugin<Info> {
         ]
       }
     } else {
-      data = trial.data as Array<{[key: string]: string | number}>;
+      data = trial.leaderboard_data as Array<{[key: string]: string | number}>;
       // Default to just use inherent order of first row if no column info provided
       if (columns == null) {
-        columns = Object.keys(trial.data[0]).map(col => ({ col }));
+        columns = Object.keys(trial.leaderboard_data[0]).map(col => ({ col }));
       }
     }
     on_load();
@@ -238,7 +244,7 @@ class LeaderboardPlugin implements JsPsychPlugin<Info> {
       display_element.innerHTML = '';
 
       // end trial
-      this.jsPsych.finishTrial();
+      this.jsPsych.finishTrial({ leaderboard_data: data });
     };
 
     // End trial after duration if specified

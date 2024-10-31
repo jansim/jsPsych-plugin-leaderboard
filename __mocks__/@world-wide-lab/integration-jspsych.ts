@@ -9,10 +9,12 @@ jsPsychWorldWideLab.client = {
 
   getLeaderboardScores: async function (leaderboardId, level, options) {
     // @ts-ignore
-    return jsPsychWorldWideLab.client.__LEADERBOARD_DATA__ || [{
-      publicIndividualName: leaderboardId,
-      score: level,
-    }];
+    return jsPsychWorldWideLab.client.__LEADERBOARD_DATA__ || {
+      scores: [{
+        publicIndividualName: leaderboardId,
+        score: level,
+      }]
+    };
   }
 }
 

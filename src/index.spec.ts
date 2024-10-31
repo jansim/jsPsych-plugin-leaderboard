@@ -21,7 +21,7 @@ describe("leaderboard plugin", () => {
     const { expectFinished, getHTML, getData } = await startTimeline([
       {
         type: LeaderboardPlugin,
-        data: sampleData,
+        leaderboard_data: sampleData,
         columns: columns,
       },
     ]);
@@ -67,6 +67,13 @@ describe("leaderboard plugin", () => {
     const continueButton = document.querySelector('.jspsych-btn');
     continueButton.click();
 
+    expect(getData().trials[0].leaderboard_data).toEqual([
+      {
+        "publicIndividualName": "test-leaderboard",
+        "score": "individual",
+      }
+    ]);
+
     await expectFinished();
   });
 
@@ -76,7 +83,7 @@ describe("leaderboard plugin", () => {
     const { expectFinished, getData } = await startTimeline([
       {
         type: LeaderboardPlugin,
-        data: sampleData,
+        leaderboard_data: sampleData,
         columns: columns,
         duration: duration,
       },
@@ -88,6 +95,8 @@ describe("leaderboard plugin", () => {
     // Advance timers
     jest.advanceTimersByTime(duration);
 
+    expect(getData().trials[0].leaderboard_data).toEqual(sampleData);
+
     await expectFinished();
   });
 
@@ -97,7 +106,7 @@ describe("leaderboard plugin", () => {
     const { expectFinished, getHTML } = await startTimeline([
       {
         type: LeaderboardPlugin,
-        data: emptyData,
+        leaderboard_data: emptyData,
         columns: columns,
       },
     ]);
@@ -137,7 +146,7 @@ describe("leaderboard plugin", () => {
     const { expectFinished, getHTML } = await startTimeline([
       {
         type: LeaderboardPlugin,
-        data: sampleData,
+        leaderboard_data: sampleData,
         columns: columns,
         table_styles: customStyles,
       },
