@@ -52,6 +52,11 @@ const info = <const>{
       type: ParameterType.OBJECT,
       default: {},
     },
+    /** The refresh interval in seconds to update the leaderboard data. If null, will not refresh. */
+    refresh_interval: {
+      type: ParameterType.INT,
+      default: null,
+    },
     /** Message to display while loading leaderboard data. Only displayed when dynamically loading data. */
     loading_message: {
       type: ParameterType.STRING,
@@ -123,6 +128,49 @@ class LeaderboardPlugin implements JsPsychPlugin<Info> {
 
   constructor(private jsPsych: JsPsych) {}
 
+  renderTable(data: Array<{[key: string]: string | number}>, columns: Array<ColumnInfo>) {
+    // Create table element
+    const table = document.createElement('table');
+    table.className = 'jspsych-leaderboard-table';
+
+    // Create table header
+    const thead = document.createElement('thead');
+    const headerRow = document.createElement('tr');
+    columns.forEach(column => {
+      const th = document.createElement('th');
+      th.textContent = column.name === undefined ? column.col : column.name;
+      headerRow.appendChild(th);
+    });
+    thead.appendChild(headerRow);
+    table.appendChild(thead);
+
+    // Create table body
+    const tbody = document.createElement('tbody');
+    data.forEach(row => {
+      const tr = document.createElement('tr');
+      columns.forEach(column => {
+        const td = document.createElement('td');
+        td.textContent = String(row[column.col]);
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+
+    return table;
+  }
+
+  async downloadLeaderboardData(jsPsychWorldWideLab: typeof import("@world-wide-lab/integration-jspsych").default, wwl_leaderboard_id: string, wwl_score_level: "individual" | "groups", wwl_score_options: {[key: string]: string | number}) {
+    const client = jsPsychWorldWideLab.client;
+    if (!client) {
+      console.error("You must initialize the World-Wide-Lab integration before using the leaderboard plugin.");
+      this.jsPsych.finishTrial();
+    }
+
+    const response = await client.getLeaderboardScores(wwl_leaderboard_id, wwl_score_level, wwl_score_options);
+    return response.scores || [];
+  }
+
   async trial(display_element: HTMLElement, trial: TrialType<Info>, on_load: () => void) {
     const onError = (errorMessage: string) => {
       display_element.innerHTML = "Error: " + errorMessage;
@@ -156,21 +204,9 @@ class LeaderboardPlugin implements JsPsychPlugin<Info> {
 
     // Download leaderboard data from WWL
     if (trial.wwl_leaderboard_id) {
-      // Get the WWL jsPsych integration
-      const jsPsychWorldWideLab = trial.jsPsychWorldWideLab as unknown as typeof import("@world-wide-lab/integration-jspsych").default;
-
-      // Check if client is initialized
-      const client = jsPsychWorldWideLab.client;
-      if (!client) {
-        console.error("You must initialize the World-Wide-Lab integration before using the leaderboard plugin.");
-        this.jsPsych.finishTrial();
-        return;
-      }
-
       // Load leaderboard scores
       display_element.innerHTML = trial.loading_message;
-      const response = await client.getLeaderboardScores(trial.wwl_leaderboard_id, trial.wwl_score_level, trial.wwl_score_options)
-      data = response.scores || [];
+      data = await this.downloadLeaderboardData(trial.jsPsychWorldWideLab as any, trial.wwl_leaderboard_id, trial.wwl_score_level, trial.wwl_score_options as any);
       console.log("Leaderboard data loaded:", data);
       display_element.innerHTML = '';
 
@@ -196,36 +232,29 @@ class LeaderboardPlugin implements JsPsychPlugin<Info> {
     styleElement.textContent = trial.table_styles;
     display_element.appendChild(styleElement);
 
-    // Create table element
-    const table = document.createElement('table');
-    table.className = 'jspsych-leaderboard-table';
+    let currentTable = this.renderTable(data, columns);
+    display_element.appendChild(currentTable);
 
-    // Create table header
-    const thead = document.createElement('thead');
-    const headerRow = document.createElement('tr');
-    columns.forEach(column => {
-      const th = document.createElement('th');
-      th.textContent = column.name === undefined ? column.col : column.name;
-      headerRow.appendChild(th);
-    });
-    thead.appendChild(headerRow);
-    table.appendChild(thead);
-
-    // Create table body
-    const tbody = document.createElement('tbody');
-    data.forEach(row => {
-      const tr = document.createElement('tr');
-      columns.forEach(column => {
-        const td = document.createElement('td');
-        td.textContent = String(row[column.col]);
-        tr.appendChild(td);
-      });
-      tbody.appendChild(tr);
-    });
-    table.appendChild(tbody);
-
-    // Add table to display element
-    display_element.appendChild(table);
+    let interval
+    if (trial.refresh_interval !== null) {
+      if (!trial.wwl_leaderboard_id) {
+        onError("You must specify 'wwl_leaderboard_id' to use 'refresh_interval'");
+      }
+      // Set interval to refresh leaderboard data
+      interval = setInterval(async () => {
+        // Refresh data
+        data = await this.downloadLeaderboardData(
+          trial.jsPsychWorldWideLab as any,
+          trial.wwl_leaderboard_id,
+          trial.wwl_score_level as any,
+          trial.wwl_score_options as any
+        );
+        // Replace table
+        const newTable = this.renderTable(data, columns);
+        currentTable.replaceWith(newTable);
+        currentTable = newTable;
+      }, trial.refresh_interval * 1000);
+    }
 
     // Add continue button if duration is null
     if (trial.duration === null) {
@@ -240,6 +269,10 @@ class LeaderboardPlugin implements JsPsychPlugin<Info> {
 
     // Function to end trial
     const end_trial = () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+
       // clear the display
       display_element.innerHTML = '';
 

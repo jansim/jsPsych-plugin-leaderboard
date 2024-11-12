@@ -63,10 +63,13 @@
                 wwl_leaderboard_id: leaderboardId,
                 jsPsychWorldWideLab: jsPsychWorldWideLab,
                 wwl_score_options: {
+                    limit: 10,
                     // Use ascending order since lower is better
                     sort: "asc",
                     // You can do a lot more here e.g. group scores, filter by date and aggregate scores
-                }
+                },
+                // Refresh the leaderboard every 5 seconds
+                refresh_interval: 5
             },
         ];
 
