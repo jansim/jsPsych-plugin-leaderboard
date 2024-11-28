@@ -77,6 +77,41 @@ describe("leaderboard plugin", () => {
     await expectFinished();
   });
 
+  it("should support automatic refreshing", async () => {
+    const interval = 1000;
+    const wwl_leaderboard_id = "test-leaderboard";
+    const { expectFinished, getHTML, getData } = await startTimeline([
+      {
+        type: LeaderboardPlugin,
+        wwl_leaderboard_id,
+        jsPsychWorldWideLab,
+        refresh_interval: interval / 1000,
+      },
+    ]);
+
+    // Check if table is rendered
+    expect(getHTML()).toContain('jspsych-leaderboard-table');
+
+    expect(getHTML()).toContain(wwl_leaderboard_id);
+
+    const newLeaderboardData = [
+      { publicIndividualName: "Maali Almeida", score: 100 },
+    ];
+    jsPsychWorldWideLab.client.__LEADERBOARD_DATA__ = newLeaderboardData;
+    jest.advanceTimersByTime(interval);
+    console.log(jsPsychWorldWideLab.client.getLeaderboardScores(wwl_leaderboard_id, "individual", {}));
+    expect(getHTML()).toContain("Maali Almeida");
+
+    // Click continue button
+    const continueButton = document.querySelector('.jspsych-btn');
+    continueButton.click();
+
+    // Data should match the latest data
+    expect(getData().trials[0].leaderboard_data).toEqual(newLeaderboardData);
+
+    await expectFinished();
+  });
+
   it("should end automatically after duration", async () => {
     const duration = 1000;
 

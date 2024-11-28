@@ -32,7 +32,7 @@ In addition to the [default data collected by all plugins](https://jspsych.org/l
 Using the CDN-hosted JavaScript file:
 
 ```js
-<script src="https://unpkg.com/@jspsych-contrib/plugin-leaderboard"></script>
+<script src="https://unpkg.com/@world-wide-lab/jspsych-plugin-leaderboard"></script>
 ```
 
 Using the JavaScript file downloaded from a GitHub release dist archive:
@@ -44,11 +44,11 @@ Using the JavaScript file downloaded from a GitHub release dist archive:
 Using NPM:
 
 ```
-npm install @jspsych-contrib/plugin-leaderboard
+npm install @world-wide-lab/jspsych-plugin-leaderboard
 ```
 
 ```js
-import jsPsychLeaderboard from '@jspsych-contrib/plugin-leaderboard';
+import jsPsychLeaderboard from '@world-wide-lab/jspsych-plugin-leaderboard';
 ```
 
 ## Examples
@@ -57,7 +57,7 @@ import jsPsychLeaderboard from '@jspsych-contrib/plugin-leaderboard';
 
 ```javascript
 import { initJsPsych } from 'jspsych';
-import jsPsychLeaderboard from '@jspsych-contrib/plugin-leaderboard';
+import jsPsychLeaderboard from '@world-wide-lab/jspsych-plugin-leaderboard';
 
 const jsPsych = initJsPsych({
   display_element: 'jspsych-target'
@@ -89,7 +89,7 @@ jsPsych.run(timeline);
 
 ```javascript
 import jsPsychHtmlKeyboardResponse from "@jspsych/plugin-html-keyboard-response";
-import jsPsychLeaderboard from '@jspsych-contrib/plugin-leaderboard';
+import jsPsychLeaderboard from '@world-wide-lab/jspsych-plugin-leaderboard';
 import jsPsychWorldWideLab from "@world-wide-lab/integration-jspsych";
 
 const jsPsych = jsPsychWorldWideLab.initJsPsych(
